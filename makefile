@@ -1,53 +1,32 @@
-CPP =    g++ -Wall -traditional -fms-extensions
-CC =    gcc -ansi
+CC= gcc 
+CXX= g++ -std=c++11 -fpermissive
+AR= ar
+CFLAGS= -ggdb 
+CXXFLAGS= -ggdb
 
-# -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC 
-#
-OBJDIR = ./obj
+OBJECTS= MemTracker.o tracker.o trackerpp.o
 
-COMMAND =	memtest
-
-OBJS = \
-	   tracker.o \
-	   trackerpp.o \
-	   MemTracker.o \
-	   test.o
-	   
-
-
-DEFINES	 = 
-
-LIBDIRS	 = 
-CFLAGS	  = -ggdb 
-#CFLAGS	  = -O2 -DNDEBUG 
-
-# -g    for debugging
-# -O    for Optimal code. Cannot use both!
-
-LIBRARIES      = -lstdc++ 
-
-#
-# Rule sets
-#
-
-#.cpp.o:
-%.o: %.cpp
-	$(CPP) -c $(CFLAGS) $< -o $@
-	chmod a+rw $@
-
-#.c.o:
-%.o: %.c
-	$(CC) -c $(CFLAGS) $< -o $@
-	chmod a+rw $@
-
-all: ${COMMAND}
-
-${COMMAND}: $(OBJS)
-	$(CPP) $(CFLAGS) $(OBJS) $(LDFLAGS) -o $@
+all:	libMemTracker.a test_c test_cpp
+	@ echo
+	@ echo "Running tests."
+	./test_c
+	./test_cpp
+	@ echo
 
 clean:
-	rm -f $(OBJS) ${COMMAND} *.errlog
+	- rm -f $(OBJECTS) *.o *.a test_c test_cpp
 
-# end of Makefile.customer
-#
+libMemTracker.a: $(OBJECTS)
+	- rm -f libMemTracker.a
+	$(AR) crv libMemTracker.a $(OBJECTS)
+
+test_c: libMemTracker.a test_c.o
+	- rm -f test_c
+	$(CXX) $(CFLAGS) test_c.o -L ./ -lMemTracker -o test_c 
+
+test_cpp: libMemTracker.a test_cpp.o
+	- rm -f test_cpp
+	$(CXX) $(CFLAGS) test_cpp.o -L ./ -lMemTracker -o test_cpp 
+
+$(OBJECTS) test_c.o test_cpp.o: MemTracker.h
 

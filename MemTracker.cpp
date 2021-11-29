@@ -23,6 +23,7 @@ vector<MemTracker> trackList;
 int blockCount = 0;
 int epoch = 0;
 string epochName = "None";
+bool hasExited = false;
 
 int StartEpoch(char *s)
 {
@@ -55,7 +56,7 @@ void ListAllocatedBlocks()
 		if(!trackList[j].freed)
 		{
 			++allocCount;
-			printf("%10i, %10x, %10i, %s, %s:%i\n", (int)trackList[j].size,
+			printf("%10i, %10lx, %10i, %s, %s:%i\n", (int)trackList[j].size,
 				(size_t)trackList[j].address, trackList[j].epoch,
 				trackList[j].epochName.c_str(), trackList[j].caller.c_str(), trackList[j].line);
 		}
@@ -65,7 +66,10 @@ void ListAllocatedBlocks()
 
 void AtExitList(void)
 {
+	if(hasExited) return;
+
 	ListAllocatedBlocks();
+	hasExited = true;
 }
 
 extern "C" 
@@ -73,6 +77,8 @@ extern "C"
 void *allocFunc(void *ptr, size_t size, const char *caller, int line)
 {
 	static bool firstCall = true;
+
+	if(hasExited) return ptr;
 
 	if(firstCall)
 	{
@@ -101,6 +107,8 @@ void *allocFunc(void *ptr, size_t size, const char *caller, int line)
 
 void freeFunc(void *ptr)
 {
+	if(hasExited) return;
+
 	int index = -1;
 	// find existing block so we know how much to copy
 	for(size_t j = 0; j < trackList.size(); ++j)
@@ -114,7 +122,7 @@ void freeFunc(void *ptr)
 
 	if(index < 0)
 	{
-		printf("WARNING:  Could not find block %x to free\n", (size_t)ptr);
+		printf("WARNING:  Could not find block %lx to free\n", (size_t)ptr);
 		return;
 	}
 
@@ -124,6 +132,8 @@ void freeFunc(void *ptr)
 
 void *reallocFunc(void *ptr, void *newptr, size_t size, const char *caller, int line)
 {
+	if(hasExited) return newptr;
+
 	int index = -1;
 
 	// find existing block so we know how much to copy
@@ -138,7 +148,7 @@ void *reallocFunc(void *ptr, void *newptr, size_t size, const char *caller, int 
 	
 	if(index < 0) 
 	{
-		printf("WARNING:  Could not find block %x to realloc\n", (size_t)ptr);
+		printf("WARNING:  Could not find block %lx to realloc\n", (size_t)ptr);
 		return 0; 
 	}
 	
