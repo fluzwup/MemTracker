@@ -8,9 +8,14 @@ OBJECTS= MemTracker.o tracker.o trackerpp.o
 
 all:	libMemTracker.a test_c test_cpp
 	@ echo
-	@ echo "Running tests."
+	@ echo "Running no-leak tests."
 	./test_c
 	./test_cpp
+	@ echo "Running leak tests."
+	./test_c leak
+	@ echo "Should have reported one leak."
+	./test_cpp leak
+	@ echo "Should have reported two leaks."
 	@ echo
 
 clean:
